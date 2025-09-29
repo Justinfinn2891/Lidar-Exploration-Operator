@@ -92,7 +92,7 @@ int main() {
 
     do{
         sl_lidar_response_measurement_node_hq_t nodes[8192];
-        size_t   count = sizeof(nodes) / sizeof(nodes[0]);
+        size_t count = sizeof(nodes) / sizeof(nodes[0]);
         std::vector<Coordinates::cartesian> finished_points;
         std::vector<Coordinates::raw_data> finished_data;
         if (SL_IS_OK(drv->grabScanDataHq(nodes, count))) {

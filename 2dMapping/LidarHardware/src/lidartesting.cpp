@@ -63,10 +63,10 @@ std::ifstream file("../tests/raw_lidar.csv");
 
         float dist = distance[j] / 4.0f;
 
-        cartesian coordinate;
+        cartesian coordinate;d
         coordinate.x_coordinate = findX(horizRad, verticalAngle, dist);
         coordinate.y_coordinate = findY(horizRad, verticalAngle, dist);
-        coordinate.z_coordinate = findZ(verticalAngle, dist);
+        coordinate.z_coordinate = findZ(verticalAngle, ist);
 
 
         cout << "This is the value: " << coordinate.x_coordinate << endl; 
