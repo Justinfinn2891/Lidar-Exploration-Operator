@@ -48,6 +48,14 @@ std::vector<int> icp::findCorrespondenses(const PointCloud &src, const PointClou
     }
     return correspondences;
 }
+
+
+Eigen::Matrix4f estimateTransformation(){
+    std::vector<int> indexes = icp.findCorrespondenses(cloud, cloud2);
+}
+
+
+
 int main()
 {
     icp icp; 
