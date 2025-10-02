@@ -87,11 +87,10 @@ int main() {
     Motor motor; 
     wiringPiSetup();
     do{
-         motor.Activate();
-
+        motor.Activate();
         sleep(2);
-        motor.forward(halfRotation);
         int halfRotation = 2048; 
+        motor.forward(halfRotation);
 
         sl_lidar_response_measurement_node_hq_t nodes[8192];
         size_t   count = sizeof(nodes) / sizeof(nodes[0]);

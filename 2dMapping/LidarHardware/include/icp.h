@@ -1,6 +1,6 @@
 #ifndef ICP_H
 #define ICP_H
-#include "Eigen/Dense"
+#include "./Eigen/Dense"
 #include <vector>
 #include <iostream> 
 #include <fstream>
@@ -20,7 +20,7 @@ can transfer the new PCD to Open3D to run later.*/
 3.) Estimate transformation using SVD
 4.) Apply transformation to points
 5.) Loop until convergence*/
-class ICP {
+class icp {
 
     public:
         // loading csv data
@@ -33,7 +33,7 @@ class ICP {
         void applyTransform();
         Eigen::Matrix4f ICP();
         // saving points
-        void saveXYZ(const std::string& filename, const PointCloud& cloud) {
+        void saveXYZ(const std::string& filename, const PointCloud& cloud);
 
 };
 

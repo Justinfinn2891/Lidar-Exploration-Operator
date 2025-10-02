@@ -1,7 +1,7 @@
 #include "../include/icp.h"
 
 
-PointCloud ICP::loadCoordinates(const std::string& filename){
+PointCloud icp::loadCoordinates(const std::string& filename){
     PointCloud cloud;
 
     std::ifstream file;
@@ -22,12 +22,12 @@ PointCloud ICP::loadCoordinates(const std::string& filename){
 
 /* Brute force method to finding its nearest neighbor*/
 /* For all points in src, there exists a point in tgt that is closest to a point in src, has minimized distance between both points*/
-std::vector<int> findCorrespondenses(const PointCloud &src, const PointCloud& tgt){
+std::vector<int> icp::findCorrespondenses(const PointCloud &src, const PointCloud& tgt){
     std::vector<int> correspondences;
 
     for(const auto& pt : src){
         // initiliazing the min_distance to a high number 
-        float min_distance = std::numerica_limits<floats>::max();
+        float min_dist = std::numeric_limits<float>::max();
         // initiliazing index to closest target point 
         int min_idx = 0;
 
@@ -35,7 +35,7 @@ std::vector<int> findCorrespondenses(const PointCloud &src, const PointCloud& tg
             /* tries to get the minimium euclidian distance between pt and tgt[j]. 
                 || pt - tgt[j] ||^2
             */
-            float dist = (pt - tgt[j].squaredNorm());
+            float dist = (pt - tgt[j]).squaredNorm();
             // if the calculated distance is less than the min_dist (initially set as a large number), it will switch to that and capture the index to be saved
             if(dist < min_dist){
                 min_dist = dist;
@@ -50,14 +50,20 @@ std::vector<int> findCorrespondenses(const PointCloud &src, const PointCloud& tg
 }
 int main()
 {
-    ICP icp; 
+    icp icp; 
     std::cout << "STARTING!" << std::endl;
     PointCloud cloud = icp.loadCoordinates("../sort.csv");
+    PointCloud cloud2 = icp.loadCoordinates("../sort2.csv");
     std::cout << "LOADED!" << std::endl;
 
-    for(Eigen::Vector3f min : cloud){
-        std::cout << min;
-    
+    std::vector<int> indexes = icp.findCorrespondenses(cloud, cloud2);
+
+    for(int in : indexes){
+        std::cout << in << std::endl;
     }
+
+
+
+
     return 0;
 }

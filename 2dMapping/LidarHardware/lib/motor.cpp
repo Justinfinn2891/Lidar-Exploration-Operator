@@ -18,9 +18,9 @@
 void Motor::stepMotor(const int &current_step){
 
     digitalWrite(Pin1, steps[current_step][0]);
-    digitalWrite(Pin1, steps[current_step][1]);
-    digitalWrite(Pin1, steps[current_step][2]);
-    digitalWrite(Pin1, steps[current_step][3]);
+    digitalWrite(Pin2, steps[current_step][1]);
+    digitalWrite(Pin3, steps[current_step][2]);
+    digitalWrite(Pin4, steps[current_step][3]);
 
 }
 
