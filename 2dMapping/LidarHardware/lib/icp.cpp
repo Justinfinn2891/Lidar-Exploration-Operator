@@ -49,9 +49,46 @@ std::vector<int> icp::findCorrespondenses(const PointCloud &src, const PointClou
     return correspondences;
 }
 
+std::vector<Eigen::Vector3d> icp::computeCentroids(const PointCloud &pointcloud){
+    //Initializing point
+    Eigen::Vector3d centroid_pt(0,0,0);
+
+    if(pointcloud.empty()) {
+        std::cout << "Vector is empty. Returning now.." std::endl; 
+        return centroid_pt;
+    }
+
+    // Adding up all of the points in the pointcloud  
+    for(const auto&pt : pointcloud)
+        centroid_pt += pt; 
+
+    // taking all of the points and dividing by size 
+    centroid_pt /= centroid_pt.size();
+
+    return centroid_pt; 
+}
+
 
 Eigen::Matrix4f estimateTransformation(){
+    std::vector<int> src = loadCoordinates("./sort1.csv");
+    std::vector<int> tgt = loadCoordinates("./sort2.csv");
     std::vector<int> indexes = icp.findCorrespondenses(cloud, cloud2);
+
+    // CENTROID POINTS
+    std::vector<Eigen::Vector3d> centroid_src = computeCentroids(src);
+    std::vector<Eigen::Vector3d> centroid_tgt = computeCentroids(tgt);
+
+    // Subtracting centroids from regular points
+    std::vector<Eigen::Vector3d> center_src, center_tgt;
+
+    for(size_t i = 0; i < src.size(); i++){
+        center_src.push_back(src[i] - centroid_src);
+        center_tgt.push_back(tgt[i] - centroid_tgt);
+    }
+
+    for(size_t i : center_src)
+        std::cout << center_src[i] << std::endl; 
+
 }
 
 
@@ -59,17 +96,8 @@ Eigen::Matrix4f estimateTransformation(){
 int main()
 {
     icp icp; 
-    std::cout << "STARTING!" << std::endl;
-    PointCloud cloud = icp.loadCoordinates("../sort.csv");
-    PointCloud cloud2 = icp.loadCoordinates("../sort2.csv");
-    std::cout << "LOADED!" << std::endl;
-
-    std::vector<int> indexes = icp.findCorrespondenses(cloud, cloud2);
-
-    for(int in : indexes){
-        std::cout << in << std::endl;
-    }
-
+    
+    Eigen::Matrix4f = icp.estimateTransformation();
 
 
 
