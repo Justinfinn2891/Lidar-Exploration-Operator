@@ -64,8 +64,8 @@ int main() {
     Motor motor("gpiochip0", 20, 21);  // dirPin=20, stepPin=21
     float currentHorizontalAngle = 0.0f;
     const float stepAngle = 3000.0f;
-    const int delay_us = 1000;
-
+    const int delay_us = 2500;
+    int counts = 0;
     do {
         // ---- Rotate forward 180° ----
         motor.setDirection(true);
@@ -97,7 +97,8 @@ int main() {
 
                 coordinate.x_coordinate = coords.findX(verticalAngle, dist);
                 coordinate.y_coordinate = coords.findY(verticalAngle, horizRad, dist);
-                coordinate.z_coordinate = coords.findZ(verticalAngle, horizRad, dist);
+                coordinate.z_coordinate = coords.findZ(verticalAngle, horizRad, dist);  
+                counts++;
 
                 if (coordinate.x_coordinate == 0 && coordinate.y_coordinate == 0 && coordinate.z_coordinate == 0)
                     continue;
@@ -108,9 +109,12 @@ int main() {
         } else {
             std::cerr << "Failed to grab scan data." << std::endl;
         }
-
+        
         std::cout << "Scan complete. Rotating back..." << std::endl;
 
+        std:: cout << "Count: " << counts << std::endl;
+        motor.setDirection(false);
+        motor.rotateDegrees(stepAngle, delay_us);
         // ---- Rotate back 180° ----
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
