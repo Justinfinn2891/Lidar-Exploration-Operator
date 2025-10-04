@@ -1,0 +1,67 @@
+#include <gpiod.h>
+#include <iostream>
+#include <thread>
+#include <chrono>
+
+#define CHIP_NAME "gpiochip0"  // Raspberry Pi 5
+#define DIR_LINE 20            // BCM GPIO 20
+#define STEP_LINE 21           // BCM GPIO 21
+
+void step_motor(gpiod_line* step, int steps, int delay_us) {
+    for (int i = 0; i < steps; ++i) {
+        gpiod_line_set_value(step, 1);
+        std::this_thread::sleep_for(std::chrono::microseconds(delay_us));
+        gpiod_line_set_value(step, 0);
+        std::this_thread::sleep_for(std::chrono::microseconds(delay_us));
+    }
+}
+
+int main() {
+    gpiod_chip* chip = gpiod_chip_open_by_name(CHIP_NAME);
+    if (!chip) {
+        std::cerr << "Failed to open GPIO chip: " << CHIP_NAME << std::endl;
+        return 1;
+    }
+
+    gpiod_line* dir  = gpiod_chip_get_line(chip, DIR_LINE);
+    gpiod_line* step = gpiod_chip_get_line(chip, STEP_LINE);
+
+    if (!dir || !step) {
+        std::cerr << "Failed to get GPIO lines" << std::endl;
+        gpiod_chip_close(chip);
+        return 1;
+    }
+
+    if (gpiod_line_request_output(dir, "stepper", 0) < 0 ||
+        gpiod_line_request_output(step, "stepper", 0) < 0) {
+        std::cerr << "Failed to request lines as outputs" << std::endl;
+        gpiod_chip_close(chip);
+        return 1;
+    }
+
+    int stepsPerRev = 200;
+    int revs = 10;
+    int totalSteps = stepsPerRev * revs;
+    int delay_us = 1000;  // Speed control
+
+    std::cout << "Rotating forward..." << std::endl;
+    gpiod_line_set_value(dir, 1); // Forward direction
+    step_motor(step, totalSteps, delay_us);
+
+    std::this_thread::sleep_for(std::chrono::seconds(1)); // Optional pause
+
+    std::cout << "Rotating backward..." << std::endl;
+    gpiod_line_set_value(dir, 0); // Reverse direction
+    step_motor(step, totalSteps, delay_us);
+
+    std::cout << "Done!" << std::endl;
+
+    // Cleanup
+    gpiod_line_release(step);
+    gpiod_line_release(dir);
+    gpiod_chip_close(chip);
+
+    return 0;
+}
+g++ -o stepper_libgpiod stepper_libgpiod.cpp -lgpiod
+sudo apt install libgpiod-dev
