@@ -62,9 +62,8 @@ int main() {
     bool first_write = true;
     char command;
     Motor motor("gpiochip0", 20, 21);  // dirPin=20, stepPin=21
-
     float currentHorizontalAngle = 0.0f;
-    const float stepAngle = 180.0f;
+    const float stepAngle = 3000.0f;
     const int delay_us = 1000;
 
     do {
@@ -114,9 +113,7 @@ int main() {
 
         // ---- Rotate back 180° ----
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        motor.setDirection(false);
-        motor.rotateDegrees(stepAngle, delay_us);
-        currentHorizontalAngle -= stepAngle;
+
         if (currentHorizontalAngle < 0.0f) currentHorizontalAngle += 360.0f;
 
         // ---- Save results ----
@@ -130,10 +127,46 @@ int main() {
     } while (command != 'c');
 
     // ---- Cleanup ----
-    motor.Deactivate();
     drv->stop();
     drv->setMotorSpeed(0);
     delete drv;
 
     return 0;
 }
+
+
+//Attemps to create or open a csv file for storing the refind points
+void saveToFile(std::vector<Coordinates::cartesian> points, bool write_tester){
+    std::string file_name = "sorted_xyz.csv";
+    std::ofstream file(file_name, std::ios::app);
+
+    if(!file.is_open()){
+        std::cerr << "The file has failed to open; possibly failed" << std::endl;
+        std::cout << "Filename tried: " << file_name << std::endl;
+    }
+
+    if(write_tester){
+        file << "x,y,z\n";
+    }
+
+    for(const auto& p: points){
+        file << p.x_coordinate << "," << p.y_coordinate << "," << p.z_coordinate << std::endl; 
+    }
+}
+
+
+void SaveToRawFile(std::vector<Coordinates::raw_data> data){
+    std::string file_name = "raw_lidar.csv";
+    std::ofstream file(file_name, std::ios::app);
+
+    if(!file.is_open()){
+        std::cerr << "The file has failed to open; possibly failed" << std::endl;
+        std::cout << "Filename tried: " << file_name << std::endl;
+    }
+
+    for(const auto& p: data){
+        file << p.angleV << "," << p.angleH << "," << p.distance << std::endl; 
+    }
+}
+
+
