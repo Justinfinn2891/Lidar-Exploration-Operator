@@ -1,56 +1,47 @@
 #include "../include/motor.h"
 
-// USE LIBRARY TO CONTROL MOTOR
-// CREATE FUNCTIONS HERE, label in .h and then implemnent in lidar.cpp
 
+Motor::Motor(const char* chipName, int dirPin, int stepPin, int stepsPerRev)
+    : chip(nullptr), dir(nullptr), step(nullptr), stepsPerRev(stepsPerRev)
+{
+    chip = gpiod_chip_open_by_name(chipName);
+    if (!chip) throw std::runtime_error("Failed to open GPIO chip");
 
-    Motor::Motor(){
-        Pin1 = 0; // GPIO17
-        Pin2 = 1; // 18
-        Pin3 = 2; // 27
-        Pin4 = 3; // 22
+    dir  = gpiod_chip_get_line(chip, dirPin);
+    step = gpiod_chip_get_line(chip, stepPin);
 
-    // rows represent a step and the 4 numbers represent which coil is energized for ON (1) and OFF (0)
+    if (!dir || !step)
+        throw std::runtime_error("Failed to get GPIO lines");
 
+    if (gpiod_line_request_output(dir, "motor", 0) < 0 ||
+        gpiod_line_request_output(step, "motor", 0) < 0)
+        throw std::runtime_error("Failed to request lines as outputs");
 }
 
-// This function will be used for HIGH or LOW setting for the motor pins 
-void Motor::stepMotor(const int &current_step){
-
-    digitalWrite(Pin1, steps[current_step][0]);
-    digitalWrite(Pin2, steps[current_step][1]);
-    digitalWrite(Pin3, steps[current_step][2]);
-    digitalWrite(Pin4, steps[current_step][3]);
-
+Motor::~Motor() {
+    if (step) gpiod_line_release(step);
+    if (dir) gpiod_line_release(dir);
+    if (chip) gpiod_chip_close(chip);
 }
 
-void Motor::forward(const int &stepCount, const int &delayMs){
-    for(int i = 0; i < stepCount; i++){
-        stepMotor(i % 8);
-        delay(delayMs);
-    }
+void Motor::setDirection(bool forward) {
+    gpiod_line_set_value(dir, forward ? 1 : 0);
 }
 
-void Motor::backward(const int &stepCount, const int &delayMs){
-    for(int i = 0; i < stepCount; i++){
-        stepMotor(7 - (i % 8));
-        delay(delayMs); // small delay in between steps 
-    }
+void Motor::stepOnce(int delay_us) {
+    gpiod_line_set_value(step, 1);
+    std::this_thread::sleep_for(std::chrono::microseconds(delay_us));
+    gpiod_line_set_value(step, 0);
+    std::this_thread::sleep_for(std::chrono::microseconds(delay_us));
 }
 
-void Motor::Activate(){
-
-    pinMode(motor.Pin1, OUTPUT); // Assign output to control them with high / low signals 
-    pinMode(motor.Pin2, OUTPUT);
-    pinMode(motor.Pin3, OUTPUT);
-    pinMode(motor.Pin4, OUTPUT);
-
+void Motor::rotateSteps(int steps, int delay_us) {
+    for (int i = 0; i < steps; ++i)
+        stepOnce(delay_us);
 }
 
-void Motor:: Deactivate(){
-
-    digitalWrite(motor.Pin1, 0);
-    digitalWrite(motor.Pin2, 0);
-    digitalWrite(motor.Pin3, 0);
-    digitalWrite(motor.Pin4, 0);
+void Motor::rotateDegrees(float degrees, int delay_us) {
+    int steps = static_cast<int>((degrees / 360.0f) * stepsPerRev);
+    rotateSteps(steps, delay_us);
 }
+

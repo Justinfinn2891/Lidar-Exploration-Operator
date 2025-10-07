@@ -3,49 +3,41 @@
 
 
 // Libraries used for the step motor 
-#include "wiringPi.h" // USING FOR PINMODE() and digitalWrite()
-#include <unistd.h> // Need for sleep functions 
+#include <gpiod.h>
 #include <iostream>
+#include <thread> 
+#include <chrono> 
 
-//const int NUM_X = 8;
-//const int NUM_Y = 4; 
+#define CHIP_NAME "gpiochip0" // GPIO controller on the PI
+/* DIR tells the driver which way to rotate.*/
+#define DIR_LINE 20 // GPIO 20
+
+/* Each pulse here makes the motor move one step*/
+#define STEP_LINE 21 // GPIO21
+
 class Motor{
 
     private:
-    /*
-        int steps[NUM_X][NUM_Y] = {
-        {1, 0, 0, 0},
-        {1, 1, 0, 0},
-        {0,  1, 0, 0},
-        {0, 1, 1, 0},
-        {0, 0, 1, 0},
-        {0, 0, 1, 1},
-        {0, 0, 0, 1},
-        {1, 0, 0, 1}
-    };
-        
-    */
-    public:
-        int STEP_PIN;
-        int DIR_PIN;
-        int ENA_PIN;
-        Motor(int stepPin, int dirPin, int enaPin = -1);
-        void Activate();
-        void Deactivate();
-        void forward(int steps, int delayMs);
-        void backward(int steps, int delayMs);
+    gpiod_chip* chip;
+    gpiod_line* dir;
+    gpiod_line* step;
+    int stepsPerRev;
 
-        //int Pin1, Pin2, Pin3, Pin4;
-        // FUNCTIONS
+public:
+    Motor(const char* chipName, int dirPin, int stepPin, int stepsPerRev = 200);
 
-/*
-        void stepMotor(const int &step);
-        void forward(const int &stepCount, const int &delayMs = 2);
-        void backward(const int &stepCount, const int &delayMs = 2);
-        void Activate();
-        void Deactivate();
-*/
+
+    ~Motor();
+
+    void setDirection(bool forward);
+
+    void stepOnce(int delay_us);
+
+    void rotateSteps(int steps, int delay_us);
+
+    void rotateDegrees(float degrees, int delay_us);
 };
+
 
 
 #endif // MOTOR_H
