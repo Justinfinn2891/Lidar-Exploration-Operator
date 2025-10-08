@@ -28,7 +28,7 @@ class icp {
         // Brute Force, finding minimum euclidian distance between points
         std::vector<int> findCorrespondenses(const PointCloud &src, const PointCloud& tgt);
         // Singular Value Decomposition
-        std::vector<int> computeCentroids(const PointCloud &pointcloud);
+        Eigen::Vector3f computeCentroids(const PointCloud& pointcloud);
         Eigen::Matrix4f estimateTransformation();
         // applying the rotation and transformation best found
         void applyTransform();
