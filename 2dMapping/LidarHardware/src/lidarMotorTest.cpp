@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cmath>
 #include <thread>
+#include <atomic>
 #include "sl_lidar.h"
 #include "sl_lidar_driver.h"
 #include "../include/motor.h"
@@ -14,6 +15,20 @@ using namespace sl;
 void saveToFile(std::vector<Coordinates::cartesian> points, bool write_tester);
 void SaveToRawFile(std::vector<Coordinates::raw_data> data);
 
+std::atomic<bool> keepRunning(true);
+
+// ==============================
+// Continuous Rotation Thread
+// ==============================
+void continuousRotate(Motor* motor, int delay_us, std::atomic<float>& horizontalAngle,
+                      float degreesPerStep) {
+    while (keepRunning) {
+        motor->step(delay_us);
+        horizontalAngle += degreesPerStep;
+        if (horizontalAngle >= 360.0f) horizontalAngle -= 360.0f;
+    }
+}
+
 int main() {
     Coordinates coords;
     Coordinates::cartesian coordinate;
@@ -22,7 +37,7 @@ int main() {
     /////////////////////////////////////
     // Basic Initialization
     /////////////////////////////////////
-    std::cout << "Starting LIDAR test..." << std::endl;
+    std::cout << "Starting continuous LiDAR scan..." << std::endl;
     std::string serial_port = "/dev/ttyUSB0";
     sl_u32 baudrate = 115200;
 
@@ -59,125 +74,113 @@ int main() {
     }
 
     /////////////////////////////////////
-    // Motor + Scan Loop
+    // Motor Configuration
     /////////////////////////////////////
+    Motor motor("gpiochip0", 20, 21); // dirPin=20, stepPin=21
+    motor.setDirection(true);
 
-    bool first_write = true;
-    char command;
-    Motor motor("gpiochip0", 20, 21);  // dirPin=20, stepPin=21
-
-    // ===== Stepper Motor Configuration =====
-    const float stepPerRev = 200.0f;    // 1.8° stepper motor
-    const float microstep = 16.0f;      // Microstepping setting
-    const float gearRatio = 1.0f;       // If no gearing, keep 1.0
+    const float stepPerRev = 200.0f;     // 1.8° stepper
+    const float microstep = 16.0f;       // TB6600 DIP: 1/16 step
+    const float gearRatio = 1.0f;        // 1:1
     const float degreesPerStep = 360.0f / (stepPerRev * microstep * gearRatio);
 
-    const int stepsPerMove = 3000;      // Your chosen move in microsteps
-    const int delay_us = 1000;
-    const float moveDegrees = stepsPerMove * degreesPerStep; // Actual degrees per move
+    const int delay_us = 700;            // adjust speed here (~rpm)
+    std::atomic<float> currentHorizontalAngle(0.0f);
 
-    float currentHorizontalAngle = 0.0f;
+    // Start rotation thread
+    std::thread motorThread(continuousRotate, &motor, delay_us,
+                            std::ref(currentHorizontalAngle), degreesPerStep);
 
+    /////////////////////////////////////
+    // Continuous LiDAR Capture Loop
+    /////////////////////////////////////
     std::vector<Coordinates::cartesian> finished_points;
     std::vector<Coordinates::raw_data> finished_data;
 
-    do {
-        // Rotate motor by defined step amount
-        motor.setDirection(true);
-        motor.rotateDegrees(stepsPerMove, delay_us);
+    std::cout << "Press 'c' to stop scanning." << std::endl;
 
-        currentHorizontalAngle += moveDegrees;
-        if (currentHorizontalAngle >= 360.0f)
-            currentHorizontalAngle -= 360.0f;
+    sl_lidar_response_measurement_node_hq_t nodes[8192];
+    size_t count = sizeof(nodes) / sizeof(nodes[0]);
 
-        // Let system settle after rotation before scanning
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
-
-        sl_lidar_response_measurement_node_hq_t nodes[8192];
-        size_t count = sizeof(nodes) / sizeof(nodes[0]);
+    while (true) {
+        if (std::cin.peek() == 'c') {
+            std::cin.ignore();
+            break;
+        }
 
         if (SL_IS_OK(drv->grabScanDataHq(nodes, count))) {
             drv->ascendScanData(nodes, count);
+
+            float horizAngleSnapshot = currentHorizontalAngle.load();
 
             for (size_t i = 0; i < count; ++i) {
                 float verticalAngle = (nodes[i].angle_z_q14 * 90.f) / 16384.f;
                 verticalAngle *= M_PI / 180.0f;
 
-                float horizRad = currentHorizontalAngle * M_PI / 180.0f;
+                float horizRad = horizAngleSnapshot * M_PI / 180.0f;
                 float dist = nodes[i].dist_mm_q2 / 4.0f;
 
                 dataForFile.angleV = verticalAngle;
-                dataForFile.angleH = currentHorizontalAngle;
+                dataForFile.angleH = horizAngleSnapshot;
                 dataForFile.distance = dist;
 
                 coordinate.x_coordinate = coords.findX(verticalAngle, dist);
                 coordinate.y_coordinate = coords.findY(verticalAngle, horizRad, dist);
                 coordinate.z_coordinate = coords.findZ(verticalAngle, horizRad, dist);
 
-                // Skip invalid points
                 if (coordinate.x_coordinate == 0 && coordinate.y_coordinate == 0 && coordinate.z_coordinate == 0)
                     continue;
 
                 finished_data.push_back(dataForFile);
                 finished_points.push_back(coordinate);
             }
-
-            std::cout << "Captured " << count << " points at angle: "
-                      << currentHorizontalAngle << "°" << std::endl;
-
-        } else {
-            std::cerr << "Failed to grab scan data." << std::endl;
         }
+    }
 
-        std::cout << "Press 'c' to stop scan or any other key to continue: ";
-        std::cin >> command;
-
-    } while (command != 'c' && command != 'C');
-
-    SaveToRawFile(finished_data);
-    saveToFile(finished_points, first_write);
+    /////////////////////////////////////
+    // Cleanup
+    /////////////////////////////////////
+    keepRunning = false;
+    if (motorThread.joinable()) motorThread.join();
 
     drv->stop();
     drv->setMotorSpeed(0);
     delete drv;
 
-    std::cout << "Scan complete. Data saved." << std::endl;
+    SaveToRawFile(finished_data);
+    saveToFile(finished_points, true);
+
+    std::cout << "Continuous scan complete. Data saved." << std::endl;
     return 0;
 }
 
 
-// Attempts to create or open a csv file for storing the refined points
+// =============================================================
+// CSV Writers (unchanged)
+// =============================================================
 void saveToFile(std::vector<Coordinates::cartesian> points, bool write_tester) {
     std::string file_name = "sorted_xyz.csv";
     std::ofstream file(file_name, std::ios::app);
 
     if (!file.is_open()) {
-        std::cerr << "The file has failed to open; possibly failed" << std::endl;
-        std::cout << "Filename tried: " << file_name << std::endl;
+        std::cerr << "Failed to open file: " << file_name << std::endl;
         return;
     }
 
-    if (write_tester) {
-        file << "x,y,z\n";
-    }
-
-    for (const auto& p : points) {
-        file << p.x_coordinate << "," << p.y_coordinate << "," << p.z_coordinate << std::endl;
-    }
+    if (write_tester) file << "x,y,z\n";
+    for (const auto& p : points)
+        file << p.x_coordinate << "," << p.y_coordinate << "," << p.z_coordinate << "\n";
 }
-
 
 void SaveToRawFile(std::vector<Coordinates::raw_data> data) {
     std::string file_name = "raw_lidar.csv";
     std::ofstream file(file_name, std::ios::app);
 
     if (!file.is_open()) {
-        std::cerr << "The file has failed to open; possibly failed" << std::endl;
-        std::cout << "Filename tried: " << file_name << std::endl;
+        std::cerr << "Failed to open file: " << file_name << std::endl;
         return;
     }
 
-    for (const auto& p : data) {
-        file << p.angleV << "," << p.angleH << "," << p.distance << std::endl;
-    }
+    for (const auto& p : data)
+        file << p.angleV << "," << p.angleH << "," << p.distance << "\n";
 }
