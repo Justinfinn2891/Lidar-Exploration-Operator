@@ -78,7 +78,6 @@ int main() {
     /////////////////////////////////////
 
 
-    // ---begin interactive loop--- //
 
     char command;
     bool first_write = true;

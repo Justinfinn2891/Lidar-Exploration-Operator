@@ -70,7 +70,7 @@ int main() {
     const float degreesPerStep = 360.0f / (stepPerRev * microstep * gearRatio);
 
     // Target horizontal resolution
-    const float moveDegrees = 1.0f;  // desired degrees per sweep increment
+    const float moveDegrees = 1.25f;  // desired degrees per sweep increment
     const int delay_us = 800;        // step delay for motor (smoothness)
     const int stepsPerMove = static_cast<int>(moveDegrees / degreesPerStep);
 
@@ -91,7 +91,7 @@ int main() {
         size_t count = sizeof(nodes) / sizeof(nodes[0]);
 
         // Capture multiple frames per step to densify data
-        for (int frame = 0; frame < 3; ++frame) {
+        for (int frame = 0; frame < 2; ++frame) {
             if (SL_IS_OK(drv->grabScanDataHq(nodes, count))) {
                 drv->ascendScanData(nodes, count);
 
@@ -120,7 +120,7 @@ int main() {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
-        std::cout << "Captured " << count * 3 << " points at " 
+        std::cout << "Captured " << count * 2 << " points at " 
                   << currentHorizontalAngle << "°" << std::endl;
 
         currentHorizontalAngle += moveDegrees;
@@ -138,7 +138,7 @@ int main() {
 }
 
 
-// ===== Save XYZ Points =====
+
 void saveToFile(std::vector<Coordinates::cartesian> points, bool write_tester) {
     std::string file_name = "sorted_xyz.csv";
     std::ofstream file(file_name, std::ios::out);
@@ -157,7 +157,7 @@ void saveToFile(std::vector<Coordinates::cartesian> points, bool write_tester) {
 }
 
 
-// ===== Save Raw Lidar Data =====
+
 void SaveToRawFile(std::vector<Coordinates::raw_data> data) {
     std::string file_name = "raw_lidar.csv";
     std::ofstream file(file_name, std::ios::out);
