@@ -64,10 +64,11 @@ int main() {
     Motor motor("gpiochip0", 20, 21);  // dirPin=20, stepPin=21
     float currentHorizontalAngle = 0.0f;
     const float stepAngle = 3000.0f;
-    const int delay_us = 2500;
-    int counts = 0;
+    const int delay_us = 1000;
+    std::vector<Coordinates::cartesian> finished_points;
+    std::vector<Coordinates::raw_data> finished_data;
     do {
-        // ---- Rotate forward 180° ----
+  
         motor.setDirection(true);
         motor.rotateDegrees(stepAngle, delay_us);
         currentHorizontalAngle += stepAngle;
@@ -75,11 +76,10 @@ int main() {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-        // ---- Grab LIDAR data ----
+
         sl_lidar_response_measurement_node_hq_t nodes[8192];
         size_t count = sizeof(nodes) / sizeof(nodes[0]);
-        std::vector<Coordinates::cartesian> finished_points;
-        std::vector<Coordinates::raw_data> finished_data;
+
 
         if (SL_IS_OK(drv->grabScanDataHq(nodes, count))) {
             drv->ascendScanData(nodes, count);
@@ -97,8 +97,7 @@ int main() {
 
                 coordinate.x_coordinate = coords.findX(verticalAngle, dist);
                 coordinate.y_coordinate = coords.findY(verticalAngle, horizRad, dist);
-                coordinate.z_coordinate = coords.findZ(verticalAngle, horizRad, dist);  
-                counts++;
+                coordinate.z_coordinate = coords.findZ(verticalAngle, horizRad, dist);
 
                 if (coordinate.x_coordinate == 0 && coordinate.y_coordinate == 0 && coordinate.z_coordinate == 0)
                     continue;
@@ -109,28 +108,24 @@ int main() {
         } else {
             std::cerr << "Failed to grab scan data." << std::endl;
         }
-        
+
         std::cout << "Scan complete. Rotating back..." << std::endl;
 
-        std:: cout << "Count: " << counts << std::endl;
-        motor.setDirection(false);
-        motor.rotateDegrees(stepAngle, delay_us);
-        // ---- Rotate back 180° ----
+    
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
         if (currentHorizontalAngle < 0.0f) currentHorizontalAngle += 360.0f;
 
-        // ---- Save results ----
-        SaveToRawFile(finished_data);
-        saveToFile(finished_points, first_write);
-        first_write = false;
+     
 
         std::cout << "Press C to stop the scan: ";
         std::cin >> command;
 
     } while (command != 'c');
 
-    // ---- Cleanup ----
+    SaveToRawFile(finished_data);
+    saveToFile(finished_points, first_write);
+
     drv->stop();
     drv->setMotorSpeed(0);
     delete drv;
