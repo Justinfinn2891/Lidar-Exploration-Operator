@@ -1,0 +1,14 @@
+Power bank
+mm: 145.0 mm × 68.3 mm × 18.3 mm
+
+Rasberry Pi
+mm: 85.6 mm × 56.5 mm × ~19.7 mm
+
+RPLidar A1
+96.8 mm × 70.3 mm × 55.0 mm
+weight: 0.375 lbs
+
+inches:
+mm: 
+
+
