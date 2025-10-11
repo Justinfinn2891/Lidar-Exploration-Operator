@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream> 
 #include <fstream>
-
+#include "kdtree.h"
 using Point = Eigen::Vector3f;
 using PointCloud = std::vector<Point>;
 /* Unless there are any objections, we can do this portion in c++ rather than 
@@ -25,13 +25,13 @@ class icp {
     public:
         // loading csv data
         PointCloud loadCoordinates(const std::string& filename);
-        // Brute Force, finding minimum euclidian distance between points
+        void saveCoordinates(const std::string& filename, const PointCloud& cloud);
         std::vector<int> findCorrespondenses(const PointCloud &src, const PointCloud& tgt);
         // Singular Value Decomposition
         Eigen::Vector3f computeCentroids(const PointCloud& pointcloud);
         Eigen::Matrix4f estimateTransformation();
         // applying the rotation and transformation best found
-        void applyTransform();
+        PointCloud transformPointCloud(const PointCloud& cloud, const Eigen::Matrix4f& transform);
         Eigen::Matrix4f ICP();
         // saving points
         void saveXYZ(const std::string& filename, const PointCloud& cloud);
