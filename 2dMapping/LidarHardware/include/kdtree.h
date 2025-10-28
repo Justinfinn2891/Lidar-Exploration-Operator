@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <limits>
 
-// Make sure PointCloud is defined:
+// Define PointCloud type
 using PointCloud = std::vector<Eigen::Vector3f>;
 
 struct KDNode {
@@ -15,19 +15,23 @@ struct KDNode {
     KDNode* left;
     KDNode* right;
 
-    KDNode(const Eigen::Vector3f& pt, int idx) : point(pt), index(idx), left(nullptr), right(nullptr) {}
+    KDNode(const Eigen::Vector3f& pt, int idx)
+        : point(pt), index(idx), left(nullptr), right(nullptr) {}
 };
 
 class KDTree {
 public:
-    KDTree(const PointCloud& points) {
+    KDTree(const PointCloud& points)
+        : all_points(points) {
         std::vector<int> indices(points.size());
-        for (int i = 0; i < (int)points.size(); ++i) indices[i] = i;
+        for (int i = 0; i < (int)points.size(); ++i)
+            indices[i] = i;
         root = build(points, indices, 0);
     }
 
     ~KDTree() { freeNode(root); }
 
+    // Basic nearest neighbor (returns closest index)
     int nearest(const Eigen::Vector3f& q) {
         best_dist = std::numeric_limits<float>::max();
         best_index = -1;
@@ -35,8 +39,21 @@ public:
         return best_index;
     }
 
+    // ✅ Compatibility wrapper for ICP
+    int nearestNeighbor(const Eigen::Vector3f& q, float max_distance = std::numeric_limits<float>::max()) {
+        int idx = nearest(q);
+        if (idx == -1) return -1;
+
+        float dist = (q - all_points[idx]).squaredNorm();
+        if (dist > max_distance * max_distance)
+            return -1;
+
+        return idx;
+    }
+
 private:
     KDNode* root;
+    PointCloud all_points; // ✅ store all points for distance verification
     float best_dist;
     int best_index;
 
@@ -85,9 +102,8 @@ private:
         KDNode* second = diff < 0 ? node->right : node->left;
 
         nearestSearch(first, q, depth + 1);
-        if (diff * diff < best_dist) {
+        if (diff * diff < best_dist)
             nearestSearch(second, q, depth + 1);
-        }
     }
 };
 

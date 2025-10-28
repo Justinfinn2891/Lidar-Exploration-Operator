@@ -1,41 +1,28 @@
-#ifndef ICP_H
-#define ICP_H
-#include "./Eigen/Dense"
+#pragma once
 #include <vector>
-#include <iostream> 
-#include <fstream>
+#include <string>
+#include <Eigen/Dense>
 #include "kdtree.h"
-using Point = Eigen::Vector3f;
-using PointCloud = std::vector<Point>;
-/* Unless there are any objections, we can do this portion in c++ rather than 
-python because c++ will be faster when executing large PCD sets than python.. We
-can transfer the new PCD to Open3D to run later.*/
 
+using Point3D = Eigen::Vector3f;
+using PointCloud = std::vector<Point3D>;
 
-
-/*GOALS:
-
-1.) Read in coordinates (x,y,z)
-2.) Find nearest neighbors 
-3.) Estimate transformation using SVD
-4.) Apply transformation to points
-5.) Loop until convergence*/
 class icp {
+public:
+    icp() = default;
 
-    public:
-        // loading csv data
-        PointCloud loadCoordinates(const std::string& filename);
-        void saveCoordinates(const std::string& filename, const PointCloud& cloud);
-        std::vector<int> findCorrespondenses(const PointCloud &src, const PointCloud& tgt);
-        // Singular Value Decomposition
-        Eigen::Vector3f computeCentroids(const PointCloud& pointcloud);
-        Eigen::Matrix4f estimateTransformation();
-        // applying the rotation and transformation best found
-        PointCloud transformPointCloud(const PointCloud& cloud, const Eigen::Matrix4f& transform);
-        Eigen::Matrix4f ICP();
-        // saving points
-        void saveXYZ(const std::string& filename, const PointCloud& cloud);
+    // --- Core pipeline ---
+    Eigen::Matrix4f estimateTransformation();
+    PointCloud transformPointCloud(const PointCloud& cloud, const Eigen::Matrix4f& transform);
+    PointCloud mergeAndDownsample(const PointCloud& a, const PointCloud& b, float voxel_size);
 
+    // --- I/O ---
+    PointCloud loadCoordinates(const std::string& filename);
+    void saveCoordinates(const std::string& filename, const PointCloud& cloud);
+
+private:
+    // --- ICP internals ---
+    std::vector<int> findCorrespondenses(const PointCloud& src, const PointCloud& tgt,
+                                         float max_distance = 0.1f, bool use_mutual = false);
+    Eigen::Vector3f computeCentroids(const PointCloud& cloud);
 };
-
-#endif //ICP_H
