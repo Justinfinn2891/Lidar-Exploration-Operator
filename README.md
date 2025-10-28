@@ -1,6 +1,8 @@
 # LEO - Lidar Exploration Operator
 
-![../pictures/](screenshot.png)
+
+![screenshot(../pictures/screenshot.png)
+
 
 ## Abstract
 
@@ -10,6 +12,7 @@ This research presents a low-cost approach for constructing a semantically rich 
 
 
 Project Tracker -> https://trello.com/b/2UjWfTOU/leo
+
 
 
 
