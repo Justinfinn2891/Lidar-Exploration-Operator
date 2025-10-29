@@ -14,7 +14,7 @@ class Coordinates{
     };
 
     struct raw_data{
-    float distance, angleH, angleV; 
+    float distance, angleH, angleV, quality; 
     };
 
 };

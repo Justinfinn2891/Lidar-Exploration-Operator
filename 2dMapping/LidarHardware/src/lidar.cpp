@@ -70,7 +70,7 @@ int main() {
     const float degreesPerStep = 360.0f / (stepPerRev * microstep * gearRatio);
 
     // Target horizontal resolution
-    const float moveDegrees = 1.25f;  // desired degrees per sweep increment
+    const float moveDegrees = .5f;  // desired degrees per sweep increment
     const int delay_us = 800;        // step delay for motor (smoothness)
     const int stepsPerMove = static_cast<int>(moveDegrees / degreesPerStep);
 
@@ -80,7 +80,7 @@ int main() {
 
     std::cout << "Sweeping full 360° in " << moveDegrees << "° increments..." << std::endl;
 
-    while (currentHorizontalAngle < 360.0f) {
+    while (currentHorizontalAngle < 200.0f) {
         motor.setDirection(true);
         motor.rotateSteps(stepsPerMove, delay_us);
 
@@ -91,7 +91,7 @@ int main() {
         size_t count = sizeof(nodes) / sizeof(nodes[0]);
 
         // Capture multiple frames per step to densify data
-        for (int frame = 0; frame < 2; ++frame) {
+        for (int frame = 0; frame < 1; ++frame) {
             if (SL_IS_OK(drv->grabScanDataHq(nodes, count))) {
                 drv->ascendScanData(nodes, count);
 
@@ -101,10 +101,12 @@ int main() {
 
                     float horizRad = currentHorizontalAngle * M_PI / 180.0f;
                     float dist = nodes[i].dist_mm_q2 / 4.0f;
+                    float quality = nodes[i].quality; // get the quality for each scan
 
                     dataForFile.angleV = verticalAngle;
                     dataForFile.angleH = currentHorizontalAngle;
                     dataForFile.distance = dist;
+                    dataForFile.quality = quality;
 
                     coordinate.x_coordinate = coords.findX(verticalAngle, dist);
                     coordinate.y_coordinate = coords.findY(verticalAngle, horizRad, dist);
@@ -169,5 +171,5 @@ void SaveToRawFile(std::vector<Coordinates::raw_data> data) {
     }
 
     for (const auto& p : data)
-        file << p.angleV << "," << p.angleH << "," << p.distance << "\n";
+        file << p.angleV << "," << p.angleH << "," << p.distance << "," << p.quality << "\n";
 }
