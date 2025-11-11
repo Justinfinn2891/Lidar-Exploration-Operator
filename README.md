@@ -38,17 +38,18 @@ This research presents a low-cost approach for constructing a semantically rich 
 
 ## References 
 
-https://doi.org/10.3390/app132312741 
+* https://doi.org/10.3390/app132312741 
 
-https://learnopencv.com/iterative-closest-point-icp-explained/ 
+* https://learnopencv.com/iterative-closest-point-icp-explained/ 
 
-https://www.sciencedirect.com/science/article/pii/S0957417422010156?via%3Dihub 
+* https://www.sciencedirect.com/science/article/pii/S0957417422010156?via%3Dihub 
 
-https://www.cvl.iis.u-tokyo.ac.jp/class2017/2017w/papers/5.3DdataProcessing/20080109_05_Nuchter_Cached_k-dtree_3DIM2007.pdf"
+* https://www.cvl.iis.u-tokyo.ac.jp/class2017/2017w/papers/5.3DdataProcessing/20080109_05_Nuchter_Cached_k-dtree_3DIM2007.pdf"
 
-https://www.mdpi.com/1424-8220/18/2/497 
+* https://www.mdpi.com/1424-8220/18/2/497 
 
-https://dlib.scu.ac.ir/bitstream/Hannan/256026/1/9781482243017.pdf 
+* https://dlib.scu.ac.ir/bitstream/Hannan/256026/1/9781482243017.pdf 
+
 
 
 
