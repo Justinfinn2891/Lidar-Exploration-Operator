@@ -18,15 +18,20 @@ This research presents a low-cost approach for constructing a semantically rich 
 
 ## Introduction
 
-* In Progress
+Reliable 3D mapping is essential for tasks such as navigation, exploration, and scene understanding, yet the hardware required to produce accurate spatial data is often prohibitively expensive. Many low-cost platforms rely on simpler sensors, which limits their ability to model complex or unstructured environments. To address this gap, we investigate a method that combines 2D LiDAR and camera data to build effective 3D representations while maintaining affordability and practicality.
 
 ## Tools and Resources
 
-* In Progress
+
 
 ## Density Comparison 
 
-* In Progress
+<p float="left">
+  <img src="./pictures/25display.png" width="45%">
+  <img src="./pictures/1125display.png" width="45%">
+</p>
+
+After achieving 3D scanning using the 2D LiDAR, we shifted our focus to increasing point density in the scene to eliminate the gaps between YZ-planes. Initially, we captured about 200,000 points at 1.0° per step, but we aimed for higher resolution. By reducing the step size to 0.25°, we collected approximately 900,000 coordinate points. Using micro-stepping, we further improved the angular resolution to 0.1125°, resulting in a high-resolution point-cloud scan. However, this increased precision came with trade-offs: significantly longer computation times due to the larger dataset, as well as longer physical scan durations because of the greater number of required iterations.
 
 ## Iterative Closest Point
 
@@ -49,6 +54,7 @@ This research presents a low-cost approach for constructing a semantically rich 
 * https://www.mdpi.com/1424-8220/18/2/497 
 
 * https://dlib.scu.ac.ir/bitstream/Hannan/256026/1/9781482243017.pdf 
+
 
 
 
