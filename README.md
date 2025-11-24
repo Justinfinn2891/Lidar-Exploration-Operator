@@ -7,7 +7,7 @@
 
 ## Links:
 Project Tracker -> https://trello.com/b/2UjWfTOU/leo
-Research Paper -> (IN Progress) 
+Research Paper -> (In Progress) 
 ## ===========================================
 
 
@@ -54,6 +54,7 @@ After achieving 3D scanning using the 2D LiDAR, we shifted our focus to increasi
 * https://www.mdpi.com/1424-8220/18/2/497 
 
 * https://dlib.scu.ac.ir/bitstream/Hannan/256026/1/9781482243017.pdf 
+
 
 
 
